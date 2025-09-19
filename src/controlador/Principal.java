@@ -5,6 +5,8 @@
  */
 package controlador;
 
+import utilidades.Util;
+
 /**
  *
  * @author 2dam
@@ -15,7 +17,68 @@ public class Principal {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        int opc;
+        
+        do {
+            
+            
+            opc = menu();
+            
+            
+             switch (opc) {
+            case 1:
+             
+                break;
+            case 2:
+                
+                break;
+            case 3:
+                
+                break;
+            case 4:
+               
+                break;
+            case 5:
+                
+                break;
+            case 6:
+              
+                break;
+            case 7:
+                
+                break;
+            default:
+                System.out.println("Opción no válida");
+                break;
+        }
+            
+            
+        } while (opc != 5);
+        
+        System.out.println("¡Hasta pronto!");
     }
     
+    /**
+     * Método que procesa la opción seleccionada por el usuario
+     * @param opcion La opción seleccionada del menú
+     */
+    public static void procesarOpcion(int opcion) {
+       
+    }
+
+    private static int menu() {
+            int opc;
+        
+            System.out.println("1. Crear Unidad Didacta");
+            System.out.println("2. Crear Convocatoria");
+            System.out.println("3. Crear Enunciado");
+            System.out.println("4. Consultar Enunciado");
+            System.out.println("5. Consultar Convocatorias");
+            System.out.println("6. Visualizar Enunciado");
+            System.out.println("7. Salir");
+            
+            opc = Util.leerInt("Seleccione una opción (1-5):", 1, 5);
+            
+            return opc;
+    }
 }
