@@ -1,14 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package controlador;
 
-/**
- *
- * @author 2dam
- */
 public interface Dao {
-    
+
+    // Crea una nueva convocatoria
+    void crearConvocatoria(int id, String nombre, String fecha, String descripcion);
+
+    // Consulta una convocatoria por ID
+    void consultarConvocatoria(int id);
+
 }

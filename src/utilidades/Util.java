@@ -385,4 +385,8 @@ public class Util {
 		 	return cont;
 		 }
 
+    public static int leerInt(int i, int i0, String elige_una_opcion) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }
