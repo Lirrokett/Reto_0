@@ -59,7 +59,6 @@ public class DaoImplementacion implements Dao {
     }
 
     // Aquí irán tus métodos CRUD (insertar, eliminar, listar, etc.)
-    // Por ejemplo:
     public void altaTren(int id, String nombre, int plazas, int ocupadas, double precio, String origen, String destino) {
         try {
             openConnection();
@@ -85,11 +84,11 @@ public class DaoImplementacion implements Dao {
 
     @Override
     public void crearConvocatoria(int id, String nombre, String fecha, String descripcion) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void consultarConvocatoria(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
