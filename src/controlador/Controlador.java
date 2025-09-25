@@ -7,25 +7,20 @@ package controlador;
 
 import utilidades.Util;
 
-/**
- *
- * @author 2dam
- */
-public class Principal {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
+public class Controlador {
+    
+    private DaoImplementacion dao;
+        
+        
+    public static void iniciar() {
         int opc;
         
         do {
             
-            
             opc = menu();
             
             
-             switch (opc) {
+            switch (opc) {
             case 1:
              
                 break;
@@ -53,7 +48,7 @@ public class Principal {
         }
             
             
-        } while (opc != 5);
+        } while (opc != 7);
         
         System.out.println("¡Hasta pronto!");
     }
@@ -62,9 +57,6 @@ public class Principal {
      * Método que procesa la opción seleccionada por el usuario
      * @param opcion La opción seleccionada del menú
      */
-    public static void procesarOpcion(int opcion) {
-       
-    }
 
     private static int menu() {
             int opc;
@@ -77,8 +69,9 @@ public class Principal {
             System.out.println("6. Visualizar Enunciado");
             System.out.println("7. Salir");
             
-            opc = Util.leerInt("Seleccione una opción (1-5):", 1, 5);
+            opc = Util.leerInt("Seleccione una opción (1-7):", 1, 7);
             
             return opc;
     }
+    
 }
