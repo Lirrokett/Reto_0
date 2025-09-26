@@ -12,7 +12,7 @@ package modelo;
 public class Enunciado {
     private Integer id;
     private String descripcion;
-    private Dificultad nivel;
+    private Nivel nivel;
     private boolean disponible;
     private String ruta;
 
@@ -27,7 +27,7 @@ public class Enunciado {
         return descripcion;
     }
 
-    public Dificultad getNivel() {
+    public Nivel getNivel() {
         return nivel;
     }
 
@@ -47,7 +47,7 @@ public class Enunciado {
         this.descripcion = descripcion;
     }
 
-    public void setNivel(Dificultad nivel) {
+    public void setNivel(Nivel nivel) {
         this.nivel = nivel;
     }
 
@@ -61,7 +61,13 @@ public class Enunciado {
 
     @Override
     public String toString() {
-        return "Enunciado{" + "id=" + id + ", descripcion=" + descripcion + ", nivel=" + nivel + ", disponible=" + disponible + ", ruta=" + ruta + '}';
+        return "----------------------------------------\n" +
+               "ID: " + id + "\n" +
+               "Descripción: " + descripcion + "\n" +
+               "Nivel: " + nivel + "\n" +
+               "Disponible: " + (disponible ? "Sí" : "No") + "\n" +
+               "Ruta: " + ruta + "\n" +
+               "----------------------------------------";
     }
     
     

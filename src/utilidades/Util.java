@@ -10,9 +10,10 @@ import java.io.ObjectInputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Scanner;
 
 public class Util {
-
+private static Scanner sc = new Scanner(System.in);
 // --------Métodos leer argumentos-----------------
 
 	// ----------String---------------
@@ -32,6 +33,11 @@ public class Util {
 		} while (fallo);
 		return cadena;
 	}
+        
+        public static String leerString(String mensaje) {
+        System.out.print(mensaje + " ");
+        return sc.nextLine();
+    }
 
 	// ----------Int---------------
 	public static int leerInt() {

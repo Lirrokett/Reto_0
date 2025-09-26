@@ -9,6 +9,6 @@ package modelo;
  *
  * @author 2dam
  */
-public enum Dificultad {
+public enum Nivel {
     ALTA, MEDIA, BAJA
 }

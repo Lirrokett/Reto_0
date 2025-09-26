@@ -5,10 +5,20 @@
  */
 package controlador;
 
+import java.util.List;
+import javax.security.auth.login.LoginException;
+import modelo.Enunciado;
+import modelo.UnidadDidactica;
+
 /**
  *
  * @author 2dam
  */
 public interface Dao {
     
+    public void altaUD(UnidadDidactica unid) throws LoginException;
+    
+    public List<UnidadDidactica> obtenerTodasUD();
+    
+    List<Enunciado> obtenerTodosEnunciados();
 }

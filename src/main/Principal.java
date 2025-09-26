@@ -6,6 +6,7 @@
 package main;
 
 import controlador.Controlador;
+import javax.security.auth.login.LoginException;
 import utilidades.Util;
 
 /**
@@ -13,7 +14,7 @@ import utilidades.Util;
  * @author 2dam
  */
 public class Principal {
-    public static void main(String[] args){
+    public static void main(String[] args) throws LoginException{
         Controlador controlador = new Controlador();
         controlador.iniciar();
         

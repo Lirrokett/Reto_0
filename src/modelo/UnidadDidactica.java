@@ -61,8 +61,15 @@ public class UnidadDidactica {
 
     @Override
     public String toString() {
-        return "UnidadDidactica{" + "id=" + id + ", acronimo=" + acronimo + ", titulo=" + titulo + ", evaluacion=" + evaluacion + ", descripcion=" + descripcion + '}';
-    }
+    return "----------------------------------------\n" +
+           "ID: " + id + "\n" +
+           "Acrónimo: " + acronimo + "\n" +
+           "Título: " + titulo + "\n" +
+           "Evaluación: " + evaluacion + "\n" +
+           "Descripción: " + descripcion + "\n" +
+           "----------------------------------------";
+}
+
     
     
     
