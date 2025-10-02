@@ -5,6 +5,7 @@
  */
 package controlador;
 
+import excepciones.ConvocatoriaExcepcion;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -43,6 +44,11 @@ public class DaoImplementacion implements Dao {
     final String CONSULTAR_ENUNCIADO = "SELECT * FROM enunciado";
     final String CONSULTAR_ENUNCIADO_ID = "SELECT * FROM enunciado WHERE ID_ENUNCIADO = ?";
     final String ASIGNAR_ENUNCOADO_CONVO = "UPDATE convocatoria_examen SET ID_ENUNCIADO = ? WHERE CONVOCATORIA = ?";
+    
+    final String INSERTAR_CONVOCATORIA = "INSERT INTO CONVOCATORIA_EXAMEN (CONVOCATORIA, DESCRIPCION, FECHA, CURSO, ID_ENUNCIADO) VALUES (?, ?, ?, ?, ?)";
+
+    final String CONSULTAR_CONVOCATORIA = "SELECT * FROM CONVOCATORIA_EXAMEN WHERE CONVOCATORIA = ?";
+
 
     private static final String SQL_EXISTE_ENUNCIADO =
         "SELECT 1 FROM ENUNCIADO WHERE ID_ENUNCIADO = ?";
@@ -121,8 +127,64 @@ public class DaoImplementacion implements Dao {
     }
 
     @Override
-    public void crearConvocatoria(int id, String nombre, String fecha, String descripcion) {
-        
+    public void crearConvocatoria(ConvocatoriaExamen con) throws ConvocatoriaExcepcion {
+        try {
+            openConnection();
+
+            stmt = this.con.prepareStatement(INSERTAR_CONVOCATORIA);
+
+            stmt.setString(1, con.getConvocatoria());
+            stmt.setString(2, con.getDescripcion());
+            stmt.setDate(3, java.sql.Date.valueOf(con.getFecha()));
+            stmt.setString(4, con.getCurso());
+            stmt.setInt(5, con.getIdEnunciado());
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                closeConnection();
+            } catch (SQLException e) {
+                System.out.println("Error al cerrar conexión: " + e.getMessage());
+            }
+        }
+
+    }
+    
+    @Override
+    public void consultarConvocatoria(String nombreConvocatoria) throws ConvocatoriaExcepcion {
+        try {
+            openConnection();
+
+            stmt = this.con.prepareStatement(CONSULTAR_CONVOCATORIA);
+            stmt.setString(1, nombreConvocatoria);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                ConvocatoriaExamen c = new ConvocatoriaExamen(
+                        rs.getString("CONVOCATORIA"),
+                        rs.getString("DESCRIPCION"),
+                        rs.getDate("FECHA").toLocalDate(),
+                        rs.getString("CURSO"),
+                        rs.getInt("ID_ENUNCIADO")
+                );
+                System.out.println(c);
+            } else {
+                System.out.println("No se encontró la convocatoria: " + nombreConvocatoria);
+            }
+            rs.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                closeConnection();
+            } catch (SQLException e) {
+                System.out.println("Error al cerrar conexión: " + e.getMessage());
+            }
+        }
     }
     
     @Override

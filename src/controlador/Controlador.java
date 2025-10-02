@@ -5,9 +5,12 @@
  */
 package controlador;
 
+import excepciones.ConvocatoriaExcepcion;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.login.LoginException;
+import modelo.ConvocatoriaExamen;
 import modelo.Enunciado;
 import modelo.Nivel;
 import modelo.UnidadDidactica;
@@ -29,13 +32,13 @@ public class Controlador {
                     crearUnidad();
                     break;
                 case 2:
-                    //Crear Convocatoria
+                    crearConvocatoriaExamen();
                     break;
                 case 3:
                     crearEnunciadoYAsociar();
                     break;
                 case 4:
-                    // Consultar Enunciado
+                    consultarConvocatoria();
                     break;
                 case 5:
                     mostrarUnidades();
@@ -49,13 +52,18 @@ public class Controlador {
                 case 8:
                     asignarEnunciadoConvocatoria();
                     break;
-
+                case 9:
+                    consultarEnunciadosPorUnidad();
+                    break;
+                case 10:
+                    consultarConvocatoriasPorEnunciado();
+                    break;
                 default:
                     System.out.println("Opción no válida");
                     break;
             }
 
-        } while (opc != 9);
+        } while (opc != 11);
 
         System.out.println("¡Hasta pronto!");
     }
@@ -71,14 +79,16 @@ public class Controlador {
         System.out.println("1. Crear Unidad Didacta");
         System.out.println("2. Crear Convocatoria");
         System.out.println("3. Crear Enunciado");
-        System.out.println("4. Consultar Enunciado");
-        System.out.println("5. Consultar Convocatorias");
-        System.out.println("6. Visualizar Enunciado");
+        System.out.println("4. Consultar convocatoria");
+        System.out.println("5. Mostrar unidades didacticas");
+        System.out.println("6. Visualizar todos los Enunciado");
         System.out.println("7. Mostrar enunciado por ID y abrir archivo");
         System.out.println("8. Asignar Enunciado a Convocatoria");
-        System.out.println("9. Salir");
+        System.out.println("9. Consultar enunciados por unidad didáctica");
+        System.out.println("10. Consultar convocatorias por enunciado");
+        System.out.println("11. Salir");
 
-        opc = Util.leerInt("Seleccione una opción (1-9):", 1, 9);
+        opc = Util.leerInt("Seleccione una opción (1-11):", 1, 11);
 
         return opc;
     }
@@ -289,6 +299,104 @@ public class Controlador {
             System.out.println("✅ Enunciado creado y asociado correctamente.");
         } catch (Exception e) {
             System.out.println("❌ Error al crear el enunciado: " + e.getMessage());
+        }
+    }
+
+    private static void consultarEnunciadosPorUnidad() {
+        System.out.println("=== Consultar enunciados por unidad didáctica ===");
+        System.out.println("Introduce el ID de la unidad didáctica:");
+        int idUnidad = Util.leerInt();
+
+        java.util.List<Enunciado> enunciados = dao.consultarEnunciadosPorUnidad(idUnidad);
+
+        if (enunciados.isEmpty()) {
+            System.out.println("No se encontraron enunciados para la unidad " + idUnidad);
+        } else {
+            System.out.println("Enunciados que tratan la unidad " + idUnidad + ":");
+            for (Enunciado e : enunciados) {
+                System.out.println(e);
+            }
+        }
+    }
+
+    /**
+     * Pide un ID de enunciado y lista por consola todas las convocatorias en las que se utiliza.
+     */
+    private static void consultarConvocatoriasPorEnunciado() {
+        System.out.println("=== Consultar convocatorias por enunciado ===");
+        System.out.println("Introduce el ID del enunciado:");
+        int idEnunciado = Util.leerInt();
+
+        java.util.List<ConvocatoriaExamen> convocatorias = dao.consultarConvocatoriasPorEnunciado(idEnunciado);
+
+        if (convocatorias.isEmpty()) {
+            System.out.println("No se encontraron convocatorias para el enunciado " + idEnunciado);
+        } else {
+            System.out.println("Convocatorias que utilizan el enunciado " + idEnunciado + ":");
+            for (ConvocatoriaExamen c : convocatorias) {
+                System.out.println(
+                        "Convocatoria=" + c.getConvocatoria()
+                        + ", Descripción=" + c.getDescripcion()
+                        + ", Fecha=" + c.getFecha()
+                        + ", Curso=" + c.getCurso()
+                );
+            }
+        }
+    }
+
+    private static void crearConvocatoria(ConvocatoriaExamen con) throws ConvocatoriaExcepcion {
+        dao.crearConvocatoria(con);
+    }
+
+    private static void crearConvocatoriaExamen() {
+        boolean repetir = true;
+
+        while (repetir) {
+            try {
+                System.out.println("Introduce la convocatoria");
+                String convocatoria = Util.introducirCadena();
+                System.out.println("Introduce la descripcion");
+                String descripcion = Util.introducirCadena();
+                System.out.println("Introduce la fecha (dd/MM/yyyy)");
+                LocalDate fecha = Util.leerFechaDMA();
+                System.out.println("Introduce el curso");
+                String curso = Util.introducirCadena();
+                int idEnunciado = Util.leerInt("Introduce el enunciado");
+
+                if (!dao.existeEnunciado(idEnunciado)) {
+                    System.out.println("Error: el enunciado " + idEnunciado + " no existe.");
+                    System.out.println("¿Quieres volver a intentarlo? (s/n)");
+                    String respuesta = Util.introducirCadena().trim().toLowerCase();
+
+                    if (respuesta.equals("s") || respuesta.equals("si")) {
+                        repetir = true;
+                    } else {
+                        repetir = false;
+                    }
+                } else {
+                    ConvocatoriaExamen con = new ConvocatoriaExamen(convocatoria, descripcion, fecha, curso, idEnunciado);
+                    crearConvocatoria(con);
+                    System.out.println("Convocatoria creada en la base de datos.");
+                    repetir = false;
+                }
+
+            } catch (ConvocatoriaExcepcion e) {
+                System.out.println(e.getMessage());
+                System.out.println("¿Quieres volver a intentarlo? (s/n)");
+                String respuesta = Util.introducirCadena().trim().toLowerCase();
+                repetir = (respuesta.equals("s") || respuesta.equals("si"));
+            }
+        }
+    }
+
+    private static void consultarConvocatoria() {
+
+        System.out.println("Introduce la convocatoria que quieres consultar:");
+        String nombreConvocatoria = Util.introducirCadena();
+        try {
+            dao.consultarConvocatoria(nombreConvocatoria);
+        } catch (ConvocatoriaExcepcion e) {
+            e.printStackTrace();
         }
     }
 }

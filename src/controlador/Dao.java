@@ -5,8 +5,10 @@
  */
 package controlador;
 
+import excepciones.ConvocatoriaExcepcion;
 import java.util.List;
 import javax.security.auth.login.LoginException;
+import modelo.ConvocatoriaExamen;
 import modelo.Enunciado;
 import modelo.UnidadDidactica;
 
@@ -26,9 +28,9 @@ public interface Dao {
     
     public void asignarEnunciadoAConvocatoria(int idEnunciado, String nombreConvocatoria);
     
-    public void crearConvocatoria(int id, String nombre, String fecha, String descripcion);
+     public void crearConvocatoria(ConvocatoriaExamen con) throws ConvocatoriaExcepcion;
     
-    //public void consultarConvocatoria(int id);
+    public void consultarConvocatoria(String nombreConvocatoria) throws ConvocatoriaExcepcion;
     
     public void crearEnunciadoConUnidadesYConvocatoria(
         modelo.Enunciado enunciado,
