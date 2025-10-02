@@ -42,7 +42,7 @@ INSERT INTO UNIDAD_DIDACTA (ID_UNIDAD_DIDACTA, ACRONIMO, TITULO, EVALUACION, DES
 INSERT INTO ENUNCIADO (ID_ENUNCIADO, DESCRIPCION, NIVEL, DISPONIBLE, RUTA) VALUES
 (1, 'Consulta simple de selección', 'Baja', TRUE, '/ruta/enunciado1.sql'),
 (2, 'Join entre dos tablas', 'Media', TRUE, '/ruta/enunciado2.sql'),
-(3, 'Normalización de base de datos', 'Alta', FALSE, '/ruta/enunciado3.sql');
+(3, 'Normalización de base de datos', 'Alta', FALSE, 'src\fichs\prueba.txt');
 
 INSERT INTO CONTIENE (ID_ENUNCIADO, ID_UNIDAD_DIDACTA) VALUES
 (1, 1),
