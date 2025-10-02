@@ -21,4 +21,8 @@ public interface Dao {
     public List<UnidadDidactica> obtenerTodasUD();
     
     List<Enunciado> obtenerTodosEnunciados();
+    
+    Enunciado obtenerEnunciadoPorId(int id);
+    
+    public void asignarEnunciadoAConvocatoria(int idEnunciado, String nombreConvocatoria);
 }
