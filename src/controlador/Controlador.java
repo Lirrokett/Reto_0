@@ -76,7 +76,7 @@ public class Controlador {
         System.out.println("8. Asignar Enunciado a Convocatoria");
         System.out.println("9. Salir");
 
-        opc = Util.leerInt("Seleccione una opción (1-9):", 1, 7);
+        opc = Util.leerInt("Seleccione una opción (1-9):", 1, 9);
 
         return opc;
     }

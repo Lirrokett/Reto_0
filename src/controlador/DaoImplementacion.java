@@ -222,7 +222,7 @@ public class DaoImplementacion implements Dao {
                 System.out.println("No se encontró la convocatoria especificada.");
             }
         } catch (SQLException e) {
-            System.out.println("Error al asignar enunciado a convocatoria: " + e.getMessage());
+            System.out.println("Error al asignar enunciado a convocatoria ");
         } finally {
             try {
                 closeConnection();
