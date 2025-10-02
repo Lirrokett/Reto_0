@@ -5,9 +5,11 @@
  */
 package controlador;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.login.LoginException;
 import modelo.Enunciado;
+import modelo.Nivel;
 import modelo.UnidadDidactica;
 import utilidades.Util;
 
@@ -27,10 +29,10 @@ public class Controlador {
                     crearUnidad();
                     break;
                 case 2:
-                    // Crear Convocatoria
+                    //Crear Convocatoria
                     break;
                 case 3:
-                    // Crear Enunciado
+                    crearEnunciadoYAsociar();
                     break;
                 case 4:
                     // Consultar Enunciado
@@ -172,10 +174,121 @@ public class Controlador {
         }
     }
 
-     private static void asignarEnunciadoConvocatoria() {
+    private static void asignarEnunciadoConvocatoria() {
         int idEnunciado = Util.leerInt("Ingrese el ID del enunciado a asignar:");
         String convocatoria = Util.leerString("Ingrese el nombre de la convocatoria:");
 
         dao.asignarEnunciadoAConvocatoria(idEnunciado, convocatoria);
+    }
+
+    private static void crearEnunciadoYAsociar() {
+        System.out.println("Crear un enunciado y agregando  a las  unidades didacticas  y convocatoria");
+
+        // ===== ENUNCIADO =====
+        System.out.println("Introduce el ID del enunciado:");
+        int idEnunciado = Util.leerInt();
+
+        System.out.println("Introduce la descripción del enunciado:");
+        String descEnunciado = Util.introducirCadena();
+
+        Nivel nivel = null;
+        do {
+            System.out.println("Introduce el nivel de dificultad (Alta, Media o Baja):");
+            String nivelStr = Util.introducirCadena().trim().toLowerCase();
+            switch (nivelStr) {
+                case "alta":
+                    nivel = Nivel.ALTA;
+                    break;
+                case "media":
+                    nivel = Nivel.MEDIA;
+                    break;
+                case "baja":
+                    nivel = Nivel.BAJA;
+                    break;
+                default:
+                    System.out.println("Nivel inválido. Debe ser Alta, Media o Baja.");
+            }
+        } while (nivel == null);
+
+        System.out.println("¿Está disponible? (S/N, 1/0, true/false):");
+        boolean disponible = Util.esBoolean();
+
+        System.out.println("Introduce la ruta del archivo del enunciado:");
+        String ruta = Util.introducirCadena();
+
+        // ===== UNIDADES DIDÁCTICAS =====
+        System.out.println("Introduce los ID de las unidades didácticas EXISTENTES separados por comas (ej: 1,3,5):");
+        String unidadesInput = Util.introducirCadena();
+        List<Integer> idsUnidades = new ArrayList<>();
+        if (unidadesInput != null) {
+            String limpio = unidadesInput.replace("\u00A0", " ").trim();
+            String[] partes = limpio.split("[,;]");
+            for (String p : partes) {
+                String t = p.trim();
+                if (t.isEmpty()) {
+                    continue;
+                }
+                if (!t.matches("\\d+")) {
+                    System.out.println("⚠️ Se ignora valor no numérico: '" + t + "'");
+                    continue;
+                }
+                try {
+                    idsUnidades.add(Integer.parseInt(t));
+                } catch (NumberFormatException ex) {
+                    System.out.println("⚠️ Número fuera de rango para int: '" + t + "'");
+                }
+            }
+        }
+
+        if (idsUnidades.isEmpty()) {
+            System.out.println("❌ No se han introducido unidades didácticas válidas. Operación cancelada.");
+            return;
+        }
+
+        // ===== Validar que las UDs existen =====
+        List<Integer> noExistentes = new ArrayList<>();
+        for (int idUD : idsUnidades) {
+            if (!dao.existeUnidadDidactica(idUD)) {
+                noExistentes.add(idUD);
+            }
+        }
+        if (!noExistentes.isEmpty()) {
+            System.out.println("❌ Las siguientes unidades didácticas no existen en la BD: " + noExistentes);
+            System.out.println("👉 Crea primero esas UDs o corrige los IDs.");
+            return;
+        }
+
+        // ===== CONVOCATORIA =====
+        System.out.println("Introduce el NOMBRE de la convocatoria existente a la que quieres asociar el enunciado:");
+        String nombreConv = Util.introducirCadena();
+
+        if (!dao.existeConvocatoriaPorNombre(nombreConv)) {
+            System.out.println("❌ La convocatoria '" + nombreConv + "' no existe en la BD. Operación cancelada.");
+            return;
+        }
+
+        // ===== Crear Enunciado =====
+        Enunciado enunciado = new Enunciado();
+        enunciado.setId(idEnunciado);
+        enunciado.setDescripcion(descEnunciado);
+        enunciado.setNivel(nivel);
+        enunciado.setDisponible(disponible);
+        enunciado.setRuta(ruta);
+
+        // ===== Resumen =====
+        System.out.println("\n=== Resumen de datos introducidos ===");
+        System.out.println(enunciado);
+        System.out.println("Unidades didácticas: " + idsUnidades);
+        System.out.println("Convocatoria: " + nombreConv);
+
+        // ===== Llamar al DAO =====
+        try {
+            modelo.ConvocatoriaExamen conv = new modelo.ConvocatoriaExamen();
+            conv.setConvocatoria(nombreConv);   // solo usamos el nombre
+            dao.crearEnunciadoConUnidadesYConvocatoria(enunciado, idsUnidades, conv);
+            System.out.println("✅ Enunciado creado y asociado correctamente.");
+        } catch (Exception e) {
+            System.out.println("❌ Error al crear el enunciado: " + e.getMessage());
+        }
     }
 }

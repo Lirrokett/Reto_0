@@ -17,6 +17,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.security.auth.login.LoginException;
+import modelo.ConvocatoriaExamen;
 import modelo.Enunciado;
 import modelo.Nivel;
 import modelo.UnidadDidactica;
@@ -43,6 +44,47 @@ public class DaoImplementacion implements Dao {
     final String CONSULTAR_ENUNCIADO_ID = "SELECT * FROM enunciado WHERE ID_ENUNCIADO = ?";
     final String ASIGNAR_ENUNCOADO_CONVO = "UPDATE convocatoria_examen SET ID_ENUNCIADO = ? WHERE CONVOCATORIA = ?";
 
+    private static final String SQL_EXISTE_ENUNCIADO =
+        "SELECT 1 FROM ENUNCIADO WHERE ID_ENUNCIADO = ?";
+
+    /** Comprueba existencia de unidad didáctica por ID. */
+    private static final String SQL_EXISTE_UNIDAD =
+        "SELECT 1 FROM UNIDAD_DIDACTA WHERE ID_UNIDAD_DIDACTA = ?";
+
+    /** Comprueba existencia de convocatoria por nombre. */
+    private static final String SQL_EXISTE_CONVOCATORIA =
+        "SELECT 1 FROM CONVOCATORIA_EXAMEN WHERE CONVOCATORIA = ?";
+
+    /** Inserta un enunciado. */
+    private static final String SQL_INSERT_ENUNCIADO =
+        "INSERT INTO ENUNCIADO (ID_ENUNCIADO, DESCRIPCION, NIVEL, DISPONIBLE, RUTA) VALUES (?, ?, ?, ?, ?)";
+
+    /** Inserta relación enunciado–unidad. */
+    private static final String SQL_INSERT_CONTIENE =
+        "INSERT INTO CONTIENE (ID_ENUNCIADO, ID_UNIDAD_DIDACTA) VALUES (?, ?)";
+
+    /** Asocia un enunciado a una convocatoria existente (por nombre). */
+    private static final String SQL_UPDATE_CONVOCATORIA_SET_ENUNCIADO =
+        "UPDATE CONVOCATORIA_EXAMEN SET ID_ENUNCIADO = ? WHERE CONVOCATORIA = ?";
+
+    /** Consulta enunciados por unidad didáctica. */
+    private static final String SQL_CONSULTAR_ENUNCIADOS_POR_UNIDAD =
+        "SELECT e.ID_ENUNCIADO, e.DESCRIPCION, e.NIVEL, e.DISPONIBLE, e.RUTA " +
+        "FROM ENUNCIADO e " +
+        "JOIN CONTIENE c ON e.ID_ENUNCIADO = c.ID_ENUNCIADO " +
+        "WHERE c.ID_UNIDAD_DIDACTA = ?";
+
+    /** Consulta convocatorias por enunciado. */
+    private static final String SQL_CONSULTAR_CONVOCATORIAS_POR_ENUNCIADO =
+        "SELECT CONVOCATORIA, DESCRIPCION, FECHA, CURSO " +
+        "FROM CONVOCATORIA_EXAMEN " +
+        "WHERE ID_ENUNCIADO = ?";
+    
+     private String dificultadToDbValue(Nivel n) {
+        String name = n.name().toLowerCase(); // "alta"
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1); // "Alta"
+    }
+    
     public DaoImplementacion() {
         this.configFile = ResourceBundle.getBundle("modelo.configClass");
         this.urlBD = this.configFile.getString("Conn");
@@ -78,6 +120,11 @@ public class DaoImplementacion implements Dao {
 
     }
 
+    @Override
+    public void crearConvocatoria(int id, String nombre, String fecha, String descripcion) {
+        
+    }
+    
     @Override
     public void altaUD(UnidadDidactica unid) throws LoginException {
         openConnection();
@@ -232,4 +279,232 @@ public class DaoImplementacion implements Dao {
         }
     }
 
+    @Override
+    public void crearEnunciadoConUnidadesYConvocatoria(
+            Enunciado enunciado,
+            List<Integer> idsUnidades,
+            ConvocatoriaExamen convocatoria) {
+
+        try {
+            openConnection();
+            con.setAutoCommit(false);  // Iniciar transacción
+
+            // 1) Validar que el enunciado NO exista
+            stmt = con.prepareStatement(SQL_EXISTE_ENUNCIADO);
+            stmt.setInt(1, enunciado.getId());
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("❌ El enunciado con ID " + enunciado.getId() + " ya existe.");
+                    con.rollback();
+                    return;
+                }
+            }
+            stmt.close();
+
+            // 2) Validar que TODAS las UDs existan
+            for (Integer idUnidad : idsUnidades) {
+                stmt = con.prepareStatement(SQL_EXISTE_UNIDAD);
+                stmt.setInt(1, idUnidad);
+                try (java.sql.ResultSet rsU = stmt.executeQuery()) {
+                    if (!rsU.next()) {
+                        System.out.println("❌ La UD " + idUnidad + " no existe.");
+                        con.rollback();
+                        return;
+                    }
+                }
+                stmt.close();
+            }
+
+            // 3) Validar que la CONVOCATORIA exista (por NOMBRE)
+            stmt = con.prepareStatement(SQL_EXISTE_CONVOCATORIA);
+            stmt.setString(1, convocatoria.getConvocatoria());
+            try (java.sql.ResultSet rsC = stmt.executeQuery()) {
+                if (!rsC.next()) {
+                    System.out.println("❌ La convocatoria '" + convocatoria.getConvocatoria() + "' no existe.");
+                    con.rollback();
+                    return;
+                }
+            }
+            stmt.close();
+
+            // 4) INSERT ENUNCIADO
+            stmt = con.prepareStatement(SQL_INSERT_ENUNCIADO);
+            stmt.setInt(1, enunciado.getId());
+            stmt.setString(2, enunciado.getDescripcion());
+            stmt.setString(3, dificultadToDbValue(enunciado.getNivel())); // "Alta|Media|Baja"
+            stmt.setBoolean(4, enunciado.isDisponible());
+            stmt.setString(5, enunciado.getRuta());
+            stmt.executeUpdate();
+            stmt.close();
+
+            // 5) INSERT CONTIENE (una fila por cada UD)
+            if (idsUnidades != null && !idsUnidades.isEmpty()) {
+                stmt = con.prepareStatement(SQL_INSERT_CONTIENE);
+                for (Integer idUnidad : idsUnidades) {
+                    stmt.setInt(1, enunciado.getId());
+                    stmt.setInt(2, idUnidad);
+                    stmt.executeUpdate();
+                }
+                stmt.close();
+            } else {
+                System.out.println("Aviso: no se han asociado unidades didácticas a este enunciado.");
+            }
+
+            // 6) UPDATE CONVOCATORIA: asociar el enunciado al nombre dado
+            stmt = con.prepareStatement(SQL_UPDATE_CONVOCATORIA_SET_ENUNCIADO);
+            stmt.setInt(1, enunciado.getId());
+            stmt.setString(2, convocatoria.getConvocatoria());
+            int filas = stmt.executeUpdate();
+            stmt.close();
+
+            if (filas == 0) {
+                System.out.println("❌ No se pudo asociar la convocatoria (0 filas actualizadas).");
+                con.rollback();
+                return;
+            }
+
+            con.commit();
+            System.out.println("✅ Enunciado, UDs y asociación a convocatoria realizados.");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error al crear enunciado y asociar: " + e.getMessage());
+            try { if (con != null) con.rollback(); } catch (Exception ex) {
+                System.out.println("❌ Error al hacer rollback: " + ex.getMessage());
+            }
+        } finally {
+            try {
+                if (con != null) con.setAutoCommit(true);
+                closeConnection();
+            } catch (Exception e) {
+                System.out.println("Error al cerrar conexión: " + e.getMessage());
+            }
+        }
+    }  
+    
+     // ========================== VALIDACIONES ==========================
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean existeUnidadDidactica(int idUnidad) {
+        try {
+            openConnection();
+            try (PreparedStatement ps = con.prepareStatement(SQL_EXISTE_UNIDAD)) {
+                ps.setInt(1, idUnidad);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error existeUnidadDidactica: " + e.getMessage());
+            return false;
+        } finally {
+            try { closeConnection(); } catch (Exception ignore) {}
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean existeConvocatoriaPorNombre(String nombreConvocatoria) {
+        try {
+            openConnection();
+            try (PreparedStatement ps = con.prepareStatement(SQL_EXISTE_CONVOCATORIA)) {
+                ps.setString(1, nombreConvocatoria);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error existeConvocatoriaPorNombre: " + e.getMessage());
+            return false;
+        } finally {
+            try { closeConnection(); } catch (Exception ignore) {}
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean existeEnunciado(int idEnunciado) {
+        try {
+            openConnection();
+            try (PreparedStatement ps = con.prepareStatement(SQL_EXISTE_ENUNCIADO)) {
+                ps.setInt(1, idEnunciado);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error existeEnunciado: " + e.getMessage());
+            return false;
+        } finally {
+            try { closeConnection(); } catch (Exception ignore) {}
+        }
+    }
+
+    // ========================== CONSULTAS ==========================
+
+    /** {@inheritDoc} */
+    @Override
+    public java.util.List<modelo.Enunciado> consultarEnunciadosPorUnidad(int idUnidad) {
+        java.util.List<modelo.Enunciado> lista = new java.util.ArrayList<>();
+        try {
+            openConnection();
+            stmt = con.prepareStatement(SQL_CONSULTAR_ENUNCIADOS_POR_UNIDAD);
+            stmt.setInt(1, idUnidad);
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    modelo.Enunciado e = new modelo.Enunciado();
+                    e.setId(rs.getInt("ID_ENUNCIADO"));
+                    e.setDescripcion(rs.getString("DESCRIPCION"));
+
+                    String nivelStr = rs.getString("NIVEL");
+                    if (nivelStr != null) {
+                        switch (nivelStr.toLowerCase()) {
+                            case "alta":  e.setNivel(modelo.Nivel.ALTA);  break;
+                            case "media": e.setNivel(modelo.Nivel.MEDIA); break;
+                            case "baja":  e.setNivel(modelo.Nivel.BAJA);  break;
+                        }
+                    }
+
+                    e.setDisponible(rs.getBoolean("DISPONIBLE"));
+                    e.setRuta(rs.getString("RUTA"));
+                    lista.add(e);
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println("❌ Error al consultar enunciados por unidad: " + ex.getMessage());
+        } finally {
+            try { closeConnection(); } catch (Exception ignore) {}
+        }
+        return lista;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public java.util.List<modelo.ConvocatoriaExamen> consultarConvocatoriasPorEnunciado(int idEnunciado) {
+        java.util.List<modelo.ConvocatoriaExamen> lista = new java.util.ArrayList<>();
+        try {
+            openConnection();
+            stmt = con.prepareStatement(SQL_CONSULTAR_CONVOCATORIAS_POR_ENUNCIADO);
+            stmt.setInt(1, idEnunciado);
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    modelo.ConvocatoriaExamen c = new modelo.ConvocatoriaExamen();
+                    c.setConvocatoria(rs.getString("CONVOCATORIA"));
+                    c.setDescripcion(rs.getString("DESCRIPCION"));
+                    // Convertir SQL Date → LocalDate
+                    java.sql.Date fechaSql = rs.getDate("FECHA");
+                    if (fechaSql != null) {
+                        c.setFecha(fechaSql.toLocalDate());
+                    }
+                    c.setCurso(rs.getString("CURSO"));
+                    lista.add(c);
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println("❌ Error al consultar convocatorias por enunciado: " + ex.getMessage());
+        } finally {
+            try { closeConnection(); } catch (Exception ignore) {}
+        }
+        return lista;
+    }
 }

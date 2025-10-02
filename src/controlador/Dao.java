@@ -25,4 +25,24 @@ public interface Dao {
     Enunciado obtenerEnunciadoPorId(int id);
     
     public void asignarEnunciadoAConvocatoria(int idEnunciado, String nombreConvocatoria);
+    
+    public void crearConvocatoria(int id, String nombre, String fecha, String descripcion);
+    
+    //public void consultarConvocatoria(int id);
+    
+    public void crearEnunciadoConUnidadesYConvocatoria(
+        modelo.Enunciado enunciado,
+        java.util.List<Integer> idsUnidades,
+        modelo.ConvocatoriaExamen convocatoria
+    );
+    
+    public boolean existeUnidadDidactica(int idUnidad);
+    
+    public boolean existeConvocatoriaPorNombre(String nombreConvocatoria);
+   
+    public boolean existeEnunciado(int idEnunciado);
+    
+    public java.util.List<modelo.Enunciado> consultarEnunciadosPorUnidad(int idUnidad);
+    
+    public java.util.List<modelo.ConvocatoriaExamen> consultarConvocatoriasPorEnunciado(int idEnunciado);
 }
